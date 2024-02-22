@@ -8,7 +8,7 @@
 
 using namespace std;
 
-#define POST_MAX 2  // 128
+#define POST_MAX 4  // 128
 #define USER_MAX 3  // 512
 #define COMM_MAX 2  // 512
 #define LIKE_MAX 2  // 1024
@@ -41,19 +41,23 @@ class User
 
 public:
     User *Following[USER_MAX], *Followers[USER_MAX];
-    Post *my_posts[POST_MAX];
+    Post *my_posts[POST_MAX], *saved_posts[POST_MAX];
+    int saved_ptr;
+    int post_ptr;
     User()
     {
+        saved_ptr = 0;
         username = bio = password = "";
         for (int i = 0; i < USER_MAX; i++)
         {
-            Following[i] = (User *)malloc(sizeof(User));
-            Followers[i] = (User *)malloc(sizeof(User));
+            Following[i] = new User();
+            Followers[i] = new User();
         }
     }
 
     User(string username, string password, string email)
     {
+        saved_ptr=0;
         this->username = username;
         this->email = email;
         this->password = password;
@@ -61,6 +65,7 @@ public:
 
     User(string username)
     {
+        saved_ptr = 0;
         this->username = username;
         cout << "Enter password: ";
         cin >> password;
@@ -98,8 +103,8 @@ public:
 
     static User *search_user(string);
 
-    // friend functions
-    friend bool operator>(User, User);
+ void show_saved_post();
+ void operator+(Post *);
 };
 
 class Post
@@ -129,10 +134,16 @@ public:
         this->content = content;
         cout << "Post created" << endl;
     }
+    Post(Post & post){
+        *this = post;
+    }
     ~Post()
     {
         cout << "Post deleted" << endl;
     }
+
+    string getContent();
+    void setContent(string);
 };
 
 class Video
