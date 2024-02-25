@@ -8,7 +8,7 @@
 
 using namespace std;
 
-#define POST_MAX 4  // 128
+#define POST_MAX 2  // 128
 #define USER_MAX 3  // 512
 #define COMM_MAX 2  // 512
 #define LIKE_MAX 2  // 1024
@@ -18,9 +18,16 @@ using namespace std;
 #define GROUP_MAX 3 // 16
 #define MAX_C 10    // 1024
 
-class User;
 class Post;
+class User;
 class Conversation;
+class DMConversation;
+class GroupConversation;
+class CommunityConversation;
+class RequestBasedCommunity;
+class FreeJoinCommunity;
+class Message;
+class Multimedia;
 class Video;
 class Audio;
 class Text;
@@ -29,11 +36,46 @@ class Image;
 class Group;
 class Comment;
 
+
 void setSession(int *session)
 {
     *session = 1;
 }
+class Post
+{
+    string content;
+    Video *post_video;
+    Image *post_image;
 
+public:
+    Comment *comments[COMM_MAX];
+    int no_of_likes;
+    User *Likes[LIKE_MAX];
+    time_t time_of_creation;
+    User *Shares[SHARE_MAX];
+    int no_of_shares;
+    string location;
+    User *author;
+    Post()
+    {
+        no_of_likes = no_of_shares = 0;
+        location = content = "";
+        // cout << "Post created" << endl;
+    }
+    Post(string content, User *author)
+    {
+        this->author = author;
+        this->content = content;
+        // cout << "Post created" << endl;
+    }
+    ~Post()
+    {
+        cout << "Post deleted" << endl;
+    }
+
+    string getContent();
+    void setContent(string);
+};
 class User
 {
     string username, bio, password, email;
@@ -41,26 +83,35 @@ class User
 
 public:
     User *Following[USER_MAX], *Followers[USER_MAX];
-    Post *my_posts[POST_MAX], *saved_posts[POST_MAX];
-    int saved_ptr;
-    int post_ptr;
+    Post *my_posts[POST_MAX];
+    Post *saved_posts[POST_MAX];
+    int saved_ptr, post_ptr;
     User()
     {
         saved_ptr = 0;
         username = bio = password = "";
         for (int i = 0; i < USER_MAX; i++)
         {
-            Following[i] = new User();
-            Followers[i] = new User();
+
+            Following[i] = (User *)malloc(sizeof(User));
+            Followers[i] = (User *)malloc(sizeof(User));
+        }
+        for (int i = 0; i < POST_MAX; i++)
+        {
+            saved_posts[i] = new Post();
         }
     }
 
     User(string username, string password, string email)
     {
-        saved_ptr=0;
+        saved_ptr = 0;
         this->username = username;
         this->email = email;
         this->password = password;
+        for (int i = 0; i < POST_MAX; i++)
+        {
+            saved_posts[i] = new Post();
+        }
     }
 
     User(string username)
@@ -71,10 +122,15 @@ public:
         cin >> password;
         cout << "Enter email: ";
         cin >> email;
+        for (int i = 0; i < POST_MAX; i++)
+        {
+            saved_posts[i] = new Post();
+        }
     }
 
     User(User *user)
     {
+        saved_ptr = 0;
         this->password = user->getPassword();
         this->email = user->getEmail();
         this->username = user->getUsername();
@@ -82,6 +138,10 @@ public:
         {
             Following[i] = new User();
             Followers[i] = new User();
+        }
+        for (int i = 0; i < POST_MAX; i++)
+        {
+            saved_posts[i] = new Post();
         }
     }
     ~User()
@@ -103,50 +163,22 @@ public:
 
     static User *search_user(string);
 
- void show_saved_post();
- void operator+(Post *);
+    void show_saved_post();
+    void operator+(Post *);
+    static void display(User);
+    static void display(User, bool);
+    // friend functions
+    friend bool operator>(User, User);
+};
+class Message{
+
 };
 
-class Post
-{
-    string content;
-    Video *post_video;
-    Image *post_image;
+class Multimedia : public Message{
 
-public:
-    Comment *comments[COMM_MAX];
-    int no_of_likes;
-    User *Likes[LIKE_MAX];
-    time_t time_of_creation;
-    User *Shares[SHARE_MAX];
-    int no_of_shares;
-    string location;
-    User *author;
-    Post()
-    {
-        no_of_likes = no_of_shares = 0;
-        location = content = "";
-        cout << "Post created" << endl;
-    }
-    Post(string content, User *author)
-    {
-        this->author = author;
-        this->content = content;
-        cout << "Post created" << endl;
-    }
-    Post(Post & post){
-        *this = post;
-    }
-    ~Post()
-    {
-        cout << "Post deleted" << endl;
-    }
-
-    string getContent();
-    void setContent(string);
 };
 
-class Video
+class Video : virtual public Multimedia
 {
     string video_path;
     Audio *audio_for_video;
@@ -234,7 +266,7 @@ public:
     }
 };
 
-class Image
+class Image : virtual public Multimedia
 {
     string image_path;
     Audio *audio_for_image;
@@ -257,7 +289,7 @@ public:
     }
 };
 
-class Audio
+class Audio : virtual public Multimedia
 {
     string audio_path;
     int duration, volume_level;
@@ -283,13 +315,13 @@ public:
 
 class Conversation
 {
-    int count;
-    bool group_or_normal;
     User *creator;
-
-public:
+protected:
     User *participants[GROUP_MAX];
-    int left_or_not[GROUP_MAX]; // 0 for left, 1 for active
+    int count;
+    int left_or_not[GROUP_MAX]; 
+public:
+    // 0 for left, 1 for active
     Text *chats_text[MAX_C];
     int text_ptr;
     Story *chats_stories[MAX_C];
@@ -299,29 +331,27 @@ public:
     Conversation()
     {
         text_ptr = 0;
-        group_or_normal = 0;
         count = 0;
         for (int i = 0; i < 2; i++)
         {
             this->participants[i] = new User();
         }
     }
-    Conversation(bool g, int count, User *creator)
+    Conversation(int count, User *creator)
     {
         text_ptr = 0;
         this->creator = creator;
-        group_or_normal = g;
         this->count = count;
         cout << "Conversation constructed" << endl;
 
-        if (!g)
+        if (true) //to be transfered to dm
         {
             for (int i = 0; i < 2; i++)
             {
                 this->participants[i] = new User();
             }
         }
-        else
+        else //to be transfered to group
         {
             for (int i = 0; i < count; i++)
             {
@@ -342,11 +372,30 @@ public:
     void display_participants();
     void create_interface_dm();
 
-    void sendText(User *);
+    virtual void sendText(User *);
 
     static Conversation *search_dm_conversations(string, string);
     static Conversation *search_dm_conversations(User, User);
     static Conversation *search_dm_conversations(User *, User *);
+};
+
+class DMConversation : public Conversation{
+    //inherits participants from the Conversation class
+    public:
+        time_t last_seen[2];
+        Message starred_messages;
+
+};
+
+class CommunityConversation : virtual public Conversation{
+
+};
+class RequestBasedCommunity : public CommunityConversation{
+
+};
+
+class FreeJoinCommunity : public CommunityConversation{
+
 };
 
 class Group
@@ -412,7 +461,7 @@ public:
     void add_members(int);
 };
 
-class Text
+class Text : public Message
 {
     string content;
     User *author;
