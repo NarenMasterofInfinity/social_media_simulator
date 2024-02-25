@@ -1,4 +1,4 @@
-#include "classes.h"
+#include "classes.hpp"
 
 #ifndef TEXT_METHODS_H
 #define TEXT_METHODS_H
@@ -17,6 +17,14 @@ void Text::setAuthor(User *user){
 
 void Text::setContent(string content){
     this->content = content;
+}
+
+void Text::display(){
+    cout<<author->getUsername()<<" : "<<content<<endl;
+}
+
+string Text::getType(){
+    return TEXT_MSG;
 }
 
 #endif
