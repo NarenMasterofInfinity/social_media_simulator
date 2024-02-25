@@ -2,21 +2,29 @@
 #include <string>
 #include <stdlib.h>
 #include <time.h>
+#include <vector>
 
 #ifndef CLASSES_H
 #define CLASSES_H
 
 using namespace std;
 
-#define POST_MAX 2  // 128
-#define USER_MAX 3  // 512
-#define COMM_MAX 2  // 512
-#define LIKE_MAX 2  // 1024
-#define SHARE_MAX 2 // 256
-#define VIEW_MAX 2  // 2048
-#define TAG_MAX 2   // 32
-#define GROUP_MAX 3 // 16
+#define POST_MAX 8  // 128
+#define USER_MAX 8  // 512
+#define COMM_MAX 8  // 512
+#define LIKE_MAX 8 // 1024
+#define SHARE_MAX 8 // 256
+#define VIEW_MAX 8  // 2048
+#define TAG_MAX 8   // 32
+#define GROUP_MAX 8 // 16
 #define MAX_C 10    // 1024
+#define NORMAL_CONV "n"
+#define GROUP_CONV "g"
+#define COMMUNITY_CONV "c"
+#define TEXT_MSG "t"
+#define IMAGE_MSG "i"
+#define VIDEO_MSG "v"
+#define AUDIO_MSG "a"
 
 class Post;
 class User;
@@ -35,7 +43,6 @@ class Story;
 class Image;
 class Group;
 class Comment;
-
 
 void setSession(int *session)
 {
@@ -170,11 +177,23 @@ public:
     // friend functions
     friend bool operator>(User, User);
 };
-class Message{
-
+class Message
+{
+    public:
+        Message(){};
+        virtual void display() = 0;
+        virtual string getType() = 0;
+        virtual User* getAuthor() = 0;
+        virtual string getContent() = 0;
+        virtual void setContent(string) = 0;
+        virtual void setAuthor(User*) = 0;
+    
 };
 
-class Multimedia : public Message{
+class Multimedia : virtual public Message
+{
+    public:
+        Multimedia(){};
 
 };
 
@@ -315,150 +334,250 @@ public:
 
 class Conversation
 {
-    User *creator;
+
 protected:
     User *participants[GROUP_MAX];
     int count;
-    int left_or_not[GROUP_MAX]; 
+    int left_or_not[GROUP_MAX];
+    User *creator;
+
 public:
     // 0 for left, 1 for active
-    Text *chats_text[MAX_C];
+    Message *chats_text[MAX_C];
     int text_ptr;
+    int p_ptr;
     Story *chats_stories[MAX_C];
     Image *chats_images[MAX_C];
     Video *chats_videos[MAX_C];
     time_t story_t[MAX_C], image_t[MAX_C], video_t[MAX_C];
-    Conversation()
-    {
-        text_ptr = 0;
-        count = 0;
-        for (int i = 0; i < 2; i++)
-        {
-            this->participants[i] = new User();
-        }
-    }
-    Conversation(int count, User *creator)
-    {
-        text_ptr = 0;
-        this->creator = creator;
-        this->count = count;
-        cout << "Conversation constructed" << endl;
-
-        if (true) //to be transfered to dm
-        {
-            for (int i = 0; i < 2; i++)
-            {
-                this->participants[i] = new User();
-            }
-        }
-        else //to be transfered to group
-        {
-            for (int i = 0; i < count; i++)
-            {
-                this->participants[i] = new User();
-            }
-        }
-    }
-
-    ~Conversation()
-    {
-        // for(int i = 0;i < count; i++){
-        //     delete participants[i];
-        // }
-    }
-
-    void add_participants(User *, User *);
-    void add_participants(Group *);
-    void display_participants();
-    void create_interface_dm();
-
-    virtual void sendText(User *);
-
+ 
+public:
+    Conversation(){p_ptr = 0;}
+    virtual void add_participants(User*, User*){};
+    virtual void add_participants(int){};
+    virtual void create_interface() = 0;
+    virtual void sendText(User *) = 0;
+    virtual void sendMessage(Message *){};
+    virtual void display_participants() = 0;
+    virtual string getType() = 0;
+    virtual ~Conversation(){};
     static Conversation *search_dm_conversations(string, string);
     static Conversation *search_dm_conversations(User, User);
     static Conversation *search_dm_conversations(User *, User *);
 };
 
-class DMConversation : public Conversation{
-    //inherits participants from the Conversation class
-    public:
-        time_t last_seen[2];
-        Message starred_messages;
+class DMConversation : public Conversation
+{
+    // inherits participants from the Conversation class
+private:
+    time_t last_seen[2];
+    vector<Message *> starred_messages;
 
+public:
+    DMConversation()
+    {
+        count = 2;
+        text_ptr = 0;
+        for (int i = 0; i < 2; i++)
+        {
+            participants[i] = new User();
+        }
+    }
+
+    DMConversation(User *user1, User *user2)
+    {
+        count = 2;
+        creator = user1;
+        participants[0] = user1;
+        participants[1] = user2;
+    }
+
+    ~DMConversation(){
+        for(int i = 0; i < 2; i++){
+            delete participants[i];
+        }
+    }
+    // inherits the create_dm_interface and addParticipants
+    
+    void exitConvo(User *);
+    void starMessage(Message *);
+    string getType();
+    void sendText(User *);
+    void create_interface();
+    void display_participants();
+
+    void add_particpants(User*, User*);
 };
 
-class CommunityConversation : virtual public Conversation{
-
-};
-class RequestBasedCommunity : public CommunityConversation{
-
-};
-
-class FreeJoinCommunity : public CommunityConversation{
-
-};
-
-class Group
+class CommunityConversation : virtual public Conversation
 {
 
 protected:
-    User *created_by;
+    User *admins[GROUP_MAX];
+    int admin_ptr;
+    string community_name;
+    string community_description;
+    Image *community_picture;
+
+public:
+    CommunityConversation() { admin_ptr = 0; p_ptr = 0; }
+    virtual ~CommunityConversation(){};
+protected:
+    bool authenticate(string username);
+
+public:
+    void setCommunityName(string, string);
+    string getCommunityName();
+    bool promoteToAdmin(string username);
+    virtual void addMembers(string username, int count) = 0;
+    virtual void addMembers(int){};
+    void setCommunityDescription(string username, string desc);
+    string getCommunityDescription();
+    void sendText(User *){};
+    string getType();
+    virtual void joinCommunity(User*){};
+    virtual void create_interface();
+    virtual void display_participants();
+    virtual void sendMessage(Message *msg);
+    virtual void issueRequest(User*) {};
+    virtual void acceptRequest(User *){};
+};
+class RequestBasedCommunity : public CommunityConversation
+{
+private:
+    User *request_queue[GROUP_MAX];
+    int request_ptr;
+
+public:
+    RequestBasedCommunity()
+    {
+        request_ptr = 0;
+        for (int i = 0; i < GROUP_MAX; i++)
+        {
+            participants[i] = new User();
+        }
+    }
+    RequestBasedCommunity(User *creator)
+    {
+        request_ptr = 0;
+        this->creator = creator;
+        admins[admin_ptr++] = creator;
+        participants[0] = new User();
+        participants[0] = creator;
+        for (int i = 1; i < GROUP_MAX; i++)
+        {
+            participants[i] = new User();
+        }
+        p_ptr++;
+    }
+    ~RequestBasedCommunity(){
+        for (int i = 0; i < GROUP_MAX; i++)
+        {
+            delete participants[i];
+        }
+    }
+    void acceptRequest(User *); // admin and request queue
+    void addMembers(string username, int count);
+    void issueRequest(User*);
+    //string getType();
+};
+
+class FreeJoinCommunity : public CommunityConversation
+{
+public:
+    FreeJoinCommunity()
+    {
+        for (int i = 0; i < GROUP_MAX; i++)
+        {
+            participants[i] = new User();
+        }
+    }
+    FreeJoinCommunity(User *creator)
+    {
+        this->creator = creator;
+        admins[admin_ptr++] = creator;
+        participants[0] = new User();
+        participants[0] = creator;
+        p_ptr++;
+    }
+    void addMembers(string, int){};
+    void addMembers(int);
+    void joinCommunity(User *);
+    //string getType();
+};
+
+class GroupConversation : public Conversation
+{
 
 private:
     Image *group_picture;
     string group_name;
+    User *admins[GROUP_MAX];
+    int admin_ptr;
 
 public:
-    User *users[GROUP_MAX];
-
-    Group()
+    GroupConversation()
     {
+        admin_ptr = 0;
         group_name = "test_group";
         cout << "Group constructed with the name " << group_name << endl;
     }
 
     // copy constructor
-    Group(const Group &g)
+    GroupConversation(const GroupConversation &g)
     {
+        admin_ptr = 0;
         this->group_name = g.group_name;
-        this->created_by = g.created_by;
-        for (int i = 0; i < GROUP_MAX; i++)
+        this->creator = g.creator;
+        admins[admin_ptr++] = creator;
+        for (int i = 0; i < g.count; i++)
         {
-            this->users[i] = (User *)malloc(sizeof(User));
-            this->users[i] = g.users[i];
+            this->participants[i] = new User();
+            this->participants[i] = g.participants[i];
         }
 
         cout << "Group constructed with the name " << g.group_name << endl;
     }
 
-    Group(User *creator, string group_name)
+    GroupConversation(User *creator, string group_name)
     {
-        created_by = creator;
+        admin_ptr = 0;
+        this->creator = creator;
         this->group_name = group_name;
-
+        admins[admin_ptr++] = creator;
         for (int i = 0; i < GROUP_MAX; i++)
         {
-            this->users[i] = (User *)malloc(sizeof(User));
+            this->participants[i] = new User();
         }
+        participants[0] = creator;
         cout << "Group constructed with the name " << group_name << endl;
     }
-    Group(User *creator, User *users[GROUP_MAX], string group_name)
+    GroupConversation(User *creator, User *users[GROUP_MAX], string group_name)
     {
-        created_by = creator;
+        admin_ptr = 0;
+        this->creator = creator;
+        admins[admin_ptr++] = creator;
         for (int i = 0; i < GROUP_MAX; i++)
         {
-            this->users[i] = (User *)malloc(sizeof(User));
-            this->users[i] = users[i];
+            this->participants[i] = new User();
+            this->participants[i] = participants[i];
         }
         this->group_name = group_name;
         cout << "Group constructed with the name " << group_name << endl;
     }
-    ~Group()
+    ~GroupConversation()
     {
         cout << "Group deleted" << endl;
     }
 
-    void add_members(int);
+    void add_participants(int);
+    string getGroupName();
+    void changeGroupName();
+    string getType();
+    void sendMessage( Message*);
+    void sendText(User*){};
+    void display_participants();
+    void create_interface();
 };
 
 class Text : public Message
@@ -489,8 +608,12 @@ public:
 
     void setAuthor(User *);
     void setContent(string);
+    void display();
+    string getType();
 };
+
+#endif
+
 
 // int main(){}
 
-#endif

@@ -1,5 +1,5 @@
-#include "classes.h"
-#include "user_db.h"
+#include "classes.hpp"
+#include "user_db.hpp"
 
 #ifndef USER_METHODS_H
 #define USER_METHODS_H
@@ -37,9 +37,9 @@ User *User::search_user(string username)
 {
     for (int j = 0; j < USER_MAX; j++)
     {
-        if (user[j].getUsername() == username)
+        if (user[j]->getUsername() == username)
         {
-            return &user[j];
+            return user[j];
         }
     }
 
