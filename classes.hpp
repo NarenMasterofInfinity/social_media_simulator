@@ -43,6 +43,7 @@ class Story;
 class Image;
 class Group;
 class Comment;
+class poll;
 
 void setSession(int *session)
 {
@@ -612,6 +613,38 @@ public:
     string getType();
 };
 
+class Poll {
+private:
+    string question;
+    
+
+public:
+	vector<string> options;
+  	vector<int> votes;
+    Poll() {}
+    Poll(string q) : question(q) {}
+
+    void addOption(string option) {
+        options.push_back(option);
+        votes.push_back(0);
+    }
+    void displayPoll() {
+        cout << "Question: " << question << endl;
+        for (size_t i = 0; i < options.size(); ++i) {
+            cout << i + 1 << ". " << options[i] << endl;
+        }
+    }
+    void vote(int index) {
+        if (index >= 0 && index < static_cast<int>(options.size())) {
+            votes[index]++;
+            cout << "Voted successfully!" << endl;
+        } else {
+            cout << "Invalid option index!" << endl;
+        }
+    }
+
+
+};
 #endif
 
 
