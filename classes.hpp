@@ -225,34 +225,48 @@ public:
     bool isValidpath(string, string, User *);
 };
 
-class Comment
-{
+class Comment {
     string content;
-    Post *belongs_to;
+    Post* belongs_to;
 
 public:
     int no_of_likes;
-    User *author;
-    User *likes[LIKE_MAX];
+    int no_of_comments;
+    User* author;
+    User* likes[LIKE_MAX];
     time_t time_of_creation;
-    User *replied_to;
+    User* replied_to;
 
-    Comment()
-    {
+   
+    string getContent(){ return content; }
+    void setContent(string c) { content = c; }
+
+  
+    Comment() {
         no_of_likes = 0;
         time_of_creation = time(NULL);
-        cout << "Comment created" << endl;
+        cout << "Default Comment constructor created" << endl;
     }
-    Comment(User *author, string content)
-    {
-        this->author = author;
-        this->content = content;
+
+    Comment(User* auth,string c) {
+    	no_of_likes = 0;
+        author = auth;
+        content = c;
         time_of_creation = time(NULL);
-        cout << "Comment created" << endl;
+        cout << "Parameterized Comment constructor created" << endl;
     }
-    ~Comment()
-    {
-        cout << "Comment deleted" << endl;
+
+    Comment(const Comment& other) {
+    	content=other.content;
+    	time_of_creation = time(NULL);
+        cout << "Copy Comment constructor created" << endl;
+    }
+
+    ~Comment() {
+    	for(i=0;i<no_of_likes;i++){
+    		delete(likes[i]);
+		}
+        cout << "Comment destructor created" << endl;
     }
 };
 
