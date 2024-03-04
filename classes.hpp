@@ -597,25 +597,42 @@ public:
 
 class Text : public Message
 {
-    string content;
-    User *author;
+     string content;
+    User* author;
 
 public:
+	
     bool liked_or_not;
     time_t time_of_creation;
-    User *replied_to;
-    Text()
-    {
+    User* replied_to;
+
+    
+    string getContent() { return content; }
+    void setContent(string c) { content = c; }
+
+   
+    Text() {
         liked_or_not = false;
+        cout << "Default Text constructor created" << endl;
     }
-    Text(User *author, string content)
-    {
-        this->author = author;
-        this->content = content;
+
+    Text(User* auth,string c) {
+        author = auth;
+        content = c;
+        cout << "Parameterized Text constructor created" << endl;
     }
-    ~Text()
-    {
-        cout << "Text deleted" << endl;
+
+    Text(const Text& other) {
+        content=other.content;
+        cout << "Copy Text constructor created" << endl;
+        cout << endl;
+    }
+
+    ~Text() {
+        cout << "Text destructor created" << endl;
+        if(author){
+            delete author;
+        }
     }
 
     User *getAuthor();
