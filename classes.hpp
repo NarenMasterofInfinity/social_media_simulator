@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <vector>
+#include <map>
 
 #ifndef CLASSES_H
 #define CLASSES_H
@@ -12,7 +13,7 @@ using namespace std;
 #define POST_MAX 8  // 128
 #define USER_MAX 8  // 512
 #define COMM_MAX 8  // 512
-#define LIKE_MAX 8 // 1024
+#define LIKE_MAX 8  // 1024
 #define SHARE_MAX 8 // 256
 #define VIEW_MAX 8  // 2048
 #define TAG_MAX 8   // 32
@@ -38,12 +39,70 @@ class Message;
 class Multimedia;
 class Video;
 class Audio;
+template <typename T>
 class Text;
 class Story;
 class Image;
 class Group;
 class Comment;
-class poll;
+class String;
+class Emoji;
+
+// defining emojis
+map<string, string> emojis = {
+    {"happy", "😊"},
+    {"heart_eyes", "😍"},
+    {"smile","😁"},
+    {"laugh", "😂"},
+    {"cry", "😢"},
+    {"angry", "😡"},
+    {"surprised", "😮"},
+    {"confused", "😕"},
+    {"kiss", "😘"},
+    {"sick", "🤢"},
+    {"cool", "😎"},
+    {"sleep", "😴"},
+    {"worried", "😟"},
+    {"sad", "😔"},
+    {"unamused", "😒"},
+    {"blush", "😊"},
+    {"hug", "🤗"},
+    {"wink", "😉"},
+    {"grin", "😁"},
+    {"tongue", "😋"},
+    {"neutral", "😐"},
+    {"smirk", "😏"},
+    {"relieved", "😌"},
+    {"pensive", "😔"},
+    {"confounded", "😖"},
+    {"disappointed", "😞"},
+    {"persevere", "😣"},
+    {"sweat", "😅"},
+    {"weary", "😩"},
+    {"sob", "😭"},
+    {"joy", "😂"},
+    {"scream", "😱"},
+    {"rage", "😠"},
+    {"yum", "😋"},
+    {"demon", "😈"},
+    {"demon_smile", "👿"}, 
+    {"innocent", "😇"},
+    {"clown", "🤡"},
+    {"lying", "🤥"},
+    {"shushing", "🤫"},
+    {"thinking", "🤔"},
+    {"zipper", "🤐"},
+    {"eye_roll", "🙄"},
+    {"sunglasses", "😎"},
+    {"nerd", "🤓"},
+    {"sick", "🤒"},
+    {"bandage", "🤕"},
+    {"thermometer", "🌡️"},
+    {"sneezing", "🤧"},
+    {"mask", "😷"},
+    {"vomit", "🤮"},
+    {"bull", "🐂"},
+};
 
 void setSession(int *session)
 {
@@ -175,30 +234,38 @@ public:
     void operator+(Post *);
     static void display(User);
     static void display(User, bool);
+
     // friend functions
+
     friend bool operator>(User, User);
 };
 class Message
 {
-    public:
-        Message(){};
-        virtual void display() = 0;
-        virtual string getType() = 0;
-        virtual User* getAuthor() = 0;
-        virtual string getContent() = 0;
-        virtual void setContent(string) = 0;
-        virtual void setAuthor(User*) = 0;
-    
+public:
+    User *author;
+    Message(){};
+    virtual void display() = 0;
+    virtual string getType() = 0;
+    virtual User *getAuthor() = 0;
+    virtual string getContent() { return ""; }; // often not needed in multimedia objects
+    virtual void setContent(string) = 0;
+    virtual void setAuthor(User *) = 0;
 };
 
-class Multimedia : virtual public Message
+class Multimedia : public Message
 {
-    public:
-        Multimedia(){};
-
+public:
+    Multimedia(){};
+    template <typename T>
+    static bool validate(string path);
+    void display(){};
+    string getType() { return TEXT_MSG; }
+    User *getAuthor() { return nullptr; }
+    void setContent(string){};
+    void setAuthor(User *){};
 };
 
-class Video : virtual public Multimedia
+class Video : public Multimedia
 {
     string video_path;
     Audio *audio_for_video;
@@ -212,6 +279,10 @@ public:
         video_path = "";
         cout << "Video created" << endl;
     }
+    Video(string path)
+    {
+        video_path = path;
+    }
     Video(int duration, string video_path)
     {
         this->duration = duration;
@@ -223,50 +294,49 @@ public:
         cout << "Video deleted" << endl;
     }
     bool isValidpath(string, string, User *);
+    void display();
+    User *getAuthor()
+    {
+        return author;
+    }
+    void setAuthor(User *author)
+    {
+        this->author = author;
+    }
+    string getType()
+    {
+        return VIDEO_MSG;
+    }
 };
 
-class Comment {
+class Comment
+{
     string content;
-    Post* belongs_to;
+    Post *belongs_to;
 
 public:
     int no_of_likes;
-    int no_of_comments;
-    User* author;
-    User* likes[LIKE_MAX];
+    User *author;
+    User *likes[LIKE_MAX];
     time_t time_of_creation;
-    User* replied_to;
+    User *replied_to;
 
-   
-    string getContent(){ return content; }
-    void setContent(string c) { content = c; }
-
-  
-    Comment() {
+    Comment()
+    {
         no_of_likes = 0;
         time_of_creation = time(NULL);
-        cout << "Default Comment constructor created" << endl;
+        cout << "Comment created" << endl;
     }
-
-    Comment(User* auth,string c) {
-    	no_of_likes = 0;
-        author = auth;
-        content = c;
+    Comment(User *author, string content)
+    {
+        this->author = author;
+        this->content = content;
         time_of_creation = time(NULL);
-        cout << "Parameterized Comment constructor created" << endl;
+        cout << "Comment created" << endl;
     }
-
-    Comment(const Comment& other) {
-    	content=other.content;
-    	time_of_creation = time(NULL);
-        cout << "Copy Comment constructor created" << endl;
-    }
-
-    ~Comment() {
-    	for(i=0;i<no_of_likes;i++){
-    		delete(likes[i]);
-		}
-        cout << "Comment destructor created" << endl;
+    ~Comment()
+    {
+        cout << "Comment deleted" << endl;
     }
 };
 
@@ -300,7 +370,7 @@ public:
     }
 };
 
-class Image : virtual public Multimedia
+class Image : public Multimedia
 {
     string image_path;
     Audio *audio_for_image;
@@ -315,15 +385,28 @@ public:
     Image(string image_path)
     {
         this->image_path = image_path;
-        cout << "Image constructed" << endl;
+        //  cout << "Image constructed" << endl;
     }
     ~Image()
     {
-        cout << "Image deleted" << endl;
+        //  cout << "Image deleted" << endl;
+    }
+    void display();
+    User *getAuthor()
+    {
+        return author;
+    }
+    void setAuthor(User *author)
+    {
+        this->author = author;
+    }
+    string getType()
+    {
+        return IMAGE_MSG;
     }
 };
 
-class Audio : virtual public Multimedia
+class Audio : public Multimedia
 {
     string audio_path;
     int duration, volume_level;
@@ -335,6 +418,10 @@ public:
         volume_level = 50;
         cout << "Audio constructed" << endl;
     }
+    Audio(string path)
+    {
+        audio_path = path;
+    }
     Audio(string audio_path, int duration)
     {
         this->duration = duration;
@@ -345,8 +432,20 @@ public:
     {
         cout << "Audio deleted" << endl;
     }
+    void display();
+    User *getAuthor()
+    {
+        return author;
+    }
+    void setAuthor(User *author)
+    {
+        this->author = author;
+    }
+    string getType()
+    {
+        return AUDIO_MSG;
+    };
 };
-
 class Conversation
 {
 
@@ -358,27 +457,29 @@ protected:
 
 public:
     // 0 for left, 1 for active
-    Message *chats_text[MAX_C];
+    Message *chats_msgs[MAX_C];
     int text_ptr;
     int p_ptr;
     Story *chats_stories[MAX_C];
-    Image *chats_images[MAX_C];
-    Video *chats_videos[MAX_C];
+    // Image *chats_images[MAX_C]; //depreciated
+    // Video *chats_videos[MAX_C]; //depreciated
     time_t story_t[MAX_C], image_t[MAX_C], video_t[MAX_C];
- 
+
 public:
-    Conversation(){p_ptr = 0;}
-    virtual void add_participants(User*, User*){};
+    Conversation() { p_ptr = 0; }
+    virtual void add_participants(User *, User *){};
     virtual void add_participants(int){};
     virtual void create_interface() = 0;
-    virtual void sendText(User *) = 0;
+    virtual void sendText(User *){};
     virtual void sendMessage(Message *){};
     virtual void display_participants() = 0;
     virtual string getType() = 0;
     virtual ~Conversation(){};
-    static Conversation *search_dm_conversations(string, string);
-    static Conversation *search_dm_conversations(User, User);
-    static Conversation *search_dm_conversations(User *, User *);
+
+    friend Conversation *search_dm_conversations(User, User);
+    friend Conversation *search_dm_conversations(User *, User *);
+    // too conflicting :(
+    friend Conversation *search_dm_conversations(string user1, string user2);
 };
 
 class DMConversation : public Conversation
@@ -407,21 +508,26 @@ public:
         participants[1] = user2;
     }
 
-    ~DMConversation(){
-        for(int i = 0; i < 2; i++){
+    ~DMConversation()
+    {
+        for (int i = 0; i < 2; i++)
+        {
             delete participants[i];
         }
     }
     // inherits the create_dm_interface and addParticipants
-    
+
     void exitConvo(User *);
     void starMessage(Message *);
     string getType();
+
+    template <class T>
     void sendText(User *);
+
     void create_interface();
     void display_participants();
 
-    void add_particpants(User*, User*);
+    void add_particpants(User *, User *);
 };
 
 class CommunityConversation : virtual public Conversation
@@ -435,8 +541,13 @@ protected:
     Image *community_picture;
 
 public:
-    CommunityConversation() { admin_ptr = 0; p_ptr = 0; }
+    CommunityConversation()
+    {
+        admin_ptr = 0;
+        p_ptr = 0;
+    }
     virtual ~CommunityConversation(){};
+
 protected:
     bool authenticate(string username);
 
@@ -450,11 +561,11 @@ public:
     string getCommunityDescription();
     void sendText(User *){};
     string getType();
-    virtual void joinCommunity(User*){};
+    virtual void joinCommunity(User *){};
     virtual void create_interface();
     virtual void display_participants();
     virtual void sendMessage(Message *msg);
-    virtual void issueRequest(User*) {};
+    virtual void issueRequest(User *){};
     virtual void acceptRequest(User *){};
 };
 class RequestBasedCommunity : public CommunityConversation
@@ -485,7 +596,8 @@ public:
         }
         p_ptr++;
     }
-    ~RequestBasedCommunity(){
+    ~RequestBasedCommunity()
+    {
         for (int i = 0; i < GROUP_MAX; i++)
         {
             delete participants[i];
@@ -493,8 +605,8 @@ public:
     }
     void acceptRequest(User *); // admin and request queue
     void addMembers(string username, int count);
-    void issueRequest(User*);
-    //string getType();
+    void issueRequest(User *);
+    // string getType();
 };
 
 class FreeJoinCommunity : public CommunityConversation
@@ -518,7 +630,7 @@ public:
     void addMembers(string, int){};
     void addMembers(int);
     void joinCommunity(User *);
-    //string getType();
+    // string getType();
 };
 
 class GroupConversation : public Conversation
@@ -553,7 +665,6 @@ public:
 
         cout << "Group constructed with the name " << g.group_name << endl;
     }
-
     GroupConversation(User *creator, string group_name)
     {
         admin_ptr = 0;
@@ -589,95 +700,94 @@ public:
     string getGroupName();
     void changeGroupName();
     string getType();
-    void sendMessage( Message*);
-    void sendText(User*){};
+    void sendMessage(Message *);
+    void sendText(User *){};
     void display_participants();
     void create_interface();
 };
-
-class Text : public Message
+class String
 {
-     string content;
-    User* author;
+    string content;
 
 public:
-	
+    String(string content)
+    {
+        this->content = content;
+    }
+    String() { content = ""; }
+    String(const String &other)
+    {
+        content = other.content;
+    }
+    void setContent(string);
+    void display();
+    string getContent();
+};
+
+class Emoji
+{
+    string content;
+    string converted;
+    string parse_and_replace(string);
+
+public:
+    Emoji()
+    {
+        content = "";
+        converted = " ";
+    }
+    Emoji(string content) { this->content = converted = parse_and_replace(content); }
+    Emoji(const Emoji &other)
+    {
+        content = other.content;
+    }
+    void display();
+    void setContent(string);
+    string getContent();
+};
+
+template <typename T = String>
+class Text : public Message
+{
+    T content;
+    User *author;
+
+public:
     bool liked_or_not;
     time_t time_of_creation;
-    User* replied_to;
-
-    
-    string getContent() { return content; }
-    void setContent(string c) { content = c; }
-
-   
-    Text() {
+    User *replied_to;
+    Text()
+    {
         liked_or_not = false;
-        cout << "Default Text constructor created" << endl;
     }
-
-    Text(User* auth,string c) {
-        author = auth;
-        content = c;
-        cout << "Parameterized Text constructor created" << endl;
+    Text(string content)
+    {
+        this->content = T(content);
     }
-
-    Text(const Text& other) {
-        content=other.content;
-        cout << "Copy Text constructor created" << endl;
-        cout << endl;
+    Text(User *author, string content)
+    {
+        this->author = author;
+        this->content = T(content);
     }
-
-    ~Text() {
-        cout << "Text destructor created" << endl;
-        if(author){
+    ~Text()
+    {
+        if (author)
+        {
             delete author;
         }
     }
 
     User *getAuthor();
+    // T getContent(){};
     string getContent();
+    void setContent(string);
 
     void setAuthor(User *);
-    void setContent(string);
+    //  void setContent(T){};
     void display();
     string getType();
 };
 
-class Poll {
-private:
-    string question;
-    
-
-public:
-	vector<string> options;
-  	vector<int> votes;
-    Poll() {}
-    Poll(string q) : question(q) {}
-
-    void addOption(string option) {
-        options.push_back(option);
-        votes.push_back(0);
-    }
-    void displayPoll() {
-        cout << "Question: " << question << endl;
-        for (size_t i = 0; i < options.size(); ++i) {
-            cout << i + 1 << ". " << options[i] << endl;
-        }
-    }
-    void vote(int index) {
-        if (index >= 0 && index < static_cast<int>(options.size())) {
-            votes[index]++;
-            cout << "Voted successfully!" << endl;
-        } else {
-            cout << "Invalid option index!" << endl;
-        }
-    }
-
-
-};
 #endif
 
-
 // int main(){}
-

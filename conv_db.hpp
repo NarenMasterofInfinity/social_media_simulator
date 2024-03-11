@@ -8,6 +8,7 @@ Conversation *convs[CONV_MAX];
 
 static int j = 0;
 
+
 void store_conv(Conversation *a)
 {
     convs[j++] = a;

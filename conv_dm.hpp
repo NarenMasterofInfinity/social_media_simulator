@@ -6,8 +6,8 @@
 #ifndef CONV_DM_H
 #define CONV_DM_H
 
-
-void DMConversation::add_particpants(User *user1, User *user2){
+void DMConversation::add_particpants(User *user1, User *user2)
+{
     this->participants[0] = user1;
     this->participants[1] = user2;
 }
@@ -17,30 +17,30 @@ string DMConversation::getType()
 }
 void DMConversation::display_participants()
 {
-    cout << "|=====================================================|" << endl;
-    cout << "|                   participants' details             |" << endl;
-    cout << "|=====================================================|" << endl;
+    std::cout << "|=====================================================|" << endl;
+    std::cout << "|                   participants' details             |" << endl;
+    std::cout << "|=====================================================|" << endl;
     for (int i = 0; i < count; i++)
     {
         User *u = participants[i];
-        cout << "Username : " << u->getUsername() << endl;
+        std::cout << "Username : " << u->getUsername() << endl;
     }
 }
 void DMConversation::create_interface()
 {
-    cout << "=======================================================" << endl;
-    cout << "                     Direct Messages                   " << endl;
-    cout << "=======================================================" << endl;
+    std::cout << "=======================================================" << endl;
+    std::cout << "                     Direct Messages                   " << endl;
+    std::cout << "=======================================================" << endl;
     display_participants();
-    cout << "=======================================================" << endl;
+    std::cout << "=======================================================" << endl;
     for (int i = 0; i < MAX_C; i++)
     {
-        if (chats_text[i])
+        if (chats_msgs[i])
         {
-            chats_text[i]->display();
+            chats_msgs[i]->display();
         }
     }
-    cout << "=======================================================" << endl;
+    std::cout << "=======================================================" << endl;
 }
 
 void DMConversation::exitConvo(User *initiator)
@@ -61,17 +61,44 @@ void DMConversation::starMessage(Message *)
     return;
 }
 
+template <class T>
 void DMConversation::sendText(User *owner)
 {
-    cout << "=========================================================" << endl;
-    string content;
+    T *data;
+    string path;
     cout << "Sending as " << owner->getUsername() << endl;
-    cout << "Enter Text: ";
+    cout << "Enter the path of the file: ";
+    cin >> path;
+    bool status = Multimedia::validate<T>(path);
+    if (status)
+    {
+        data = new T(path);
+        data->setAuthor(owner);
+        chats_msgs[text_ptr++] = data;
+    }
+}
+
+template <>
+void DMConversation::sendText<Text<String>>(User *owner)
+{
+    string content;
+    std::cout << "Sending as " << owner->getUsername() << endl;
+    std::cout << "Enter Text: ";
     getline(cin >> ws, content);
-    cout << "=========================================================" << endl;
-    chats_text[text_ptr] = new Text();
-    chats_text[text_ptr]->setAuthor(new User(owner->getUsername(), owner->getPassword(),owner->getEmail()));
-    chats_text[text_ptr]->setContent(content);
-    text_ptr += 1;
+    Text<> *data = new Text<>(content);
+    data->setAuthor(owner);
+    chats_msgs[text_ptr++] = data;
+}
+
+template <>
+void DMConversation::sendText<Text<Emoji>>(User *owner)
+{
+    string content;
+    std::cout << "Sending as " << owner->getUsername() << endl;
+    std::cout << "Enter Text: ";
+    getline(cin >> ws, content);
+    Text<Emoji> *data = new Text<Emoji>(content);
+    data->setAuthor(owner);
+    chats_msgs[text_ptr++] = data;
 }
 #endif

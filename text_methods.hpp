@@ -1,29 +1,33 @@
 #include "classes.hpp"
+#include <string>
 
 #ifndef TEXT_METHODS_H
 #define TEXT_METHODS_H
 
-User* Text::getAuthor(){
+template<typename T>
+User* Text<T>::getAuthor(){
     return author;
 }
-
-string Text::getContent(){
-    return content;
+template<typename T>
+string Text<T>::getContent(){
+    return content.getContent();
 }
-
-void Text::setAuthor(User *user){
+template<typename T>
+void Text<T>::setAuthor(User *user){
     author = user;
 }
-
-void Text::setContent(string content){
+template<typename T>
+void Text<T>::setContent(string content){
     this->content = content;
 }
-
-void Text::display(){
-    cout<<author->getUsername()<<" : "<<content<<endl;
+template<typename T>
+void Text<T>::display(){
+    cout<< author->getUsername() <<" : ";
+    content.display();
 }
 
-string Text::getType(){
+template<typename T>
+string Text<T>::getType(){
     return TEXT_MSG;
 }
 

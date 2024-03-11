@@ -56,9 +56,9 @@ int main()
     store_user(u6);
     store_user(u7);
 
-    Message *msg1 = new Text();
-    Message *msg2 = new Text();
-    Message *msg3 = new Text();
+    Message *msg1 = new Text<>();
+    Message *msg2 = new Text<>();
+    Message *msg3 = new Text<>();
 
     Conversation *conv = new DMConversation(u1, u2);
 
@@ -120,7 +120,7 @@ int main()
 
     //sending message as non-admin
 
-    Message *msg5 = new Text();
+    Message *msg5 = new Text<>();
     msg5->setAuthor(u2);
     msg5->setContent("This is a community message");
 
