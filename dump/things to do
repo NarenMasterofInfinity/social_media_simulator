@@ -1,7 +1,0 @@
--- everytime message is sent - add a time delay of 1s.
-
-dm - level 2
-community - level 1
-
-
-all the operator ovdrloaders to be class objects and not pointers
